@@ -3068,6 +3068,7 @@ not succeed if there is too little space on the page. If there is just
 one record on the page, the insert will always succeed; this is to
 prevent trying to split a page with just one record.
 @return DB_SUCCESS, DB_WAIT_LOCK, DB_FAIL, or error number */
+// 插入单个页
 dberr_t
 btr_cur_optimistic_insert(
 /*======================*/
@@ -3107,8 +3108,8 @@ btr_cur_optimistic_insert(
 
 	*big_rec = NULL;
 
-	block = btr_cur_get_block(cursor);
-	page = buf_block_get_frame(block);
+	block = btr_cur_get_block(cursor); // buf_block_t
+	page = buf_block_get_frame(block); // block->frame
 	index = cursor->index;
 
 	/* Block are not latched for insert if table is intrinsic
@@ -3128,7 +3129,10 @@ btr_cur_optimistic_insert(
 	}
 #endif /* UNIV_DEBUG_VALGRIND */
 
-	leaf = page_is_leaf(page);
+        // (!*(const uint16*) (page + (PAGE_HEADER + PAGE_LEVEL)));
+        // 判断是否是叶子节点, 通过level判断
+        // page0page.ic
+	leaf = page_is_leaf(page); 
 
 	/* Calculate the record size when entry is converted to a record */
 	rec_size = rec_get_converted_size(index, entry, n_ext);

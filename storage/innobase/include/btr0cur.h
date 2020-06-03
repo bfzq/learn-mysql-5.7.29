@@ -902,6 +902,7 @@ enum btr_cur_method {
 
 /** The tree cursor: the definition appears here only for the compiler
 to know struct size! */
+// b+树游标结构
 struct btr_cur_t {
 	btr_cur_t() { memset(this, 0, sizeof(*this)); }
 
