@@ -503,7 +503,9 @@ mtr_write_log(
 
 /** Start a mini-transaction.
 @param sync		true if it is a synchronous mini-transaction
-@param read_only	true if read only mini-transaction */
+@param read_only	true if read only mini-transaction
+初始化mini-transaction
+*/
 void
 mtr_t::start(bool sync, bool read_only)
 {
@@ -514,8 +516,9 @@ mtr_t::start(bool sync, bool read_only)
 	m_sync =  sync;
 
 	m_commit_lsn = 0;
-
+        /* 为锁日志管理对象申请内存 */
 	new(&m_impl.m_log) mtr_buf_t();
+        /* 为日志管理对象申请内存 */
 	new(&m_impl.m_memo) mtr_buf_t();
 
 	m_impl.m_mtr = this;
