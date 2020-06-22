@@ -937,7 +937,7 @@ mtr_t::Command::release_all()
 void
 mtr_t::Command::release_latches()
 {
-	ReleaseLatches release;
+  ReleaseLatches release; // ReleaseLatches 重载(), 实现释放锁
 	Iterate<ReleaseLatches> iterator(release);
 
 	m_impl->m_memo.for_each_block_in_reverse(iterator);
