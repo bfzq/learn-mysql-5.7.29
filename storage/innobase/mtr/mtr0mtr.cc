@@ -983,7 +983,7 @@ mtr_t::Command::execute()
 	if (m_impl->m_made_dirty) {
 		log_flush_order_mutex_exit();
 	}
-
+        // 释放锁
 	release_latches();
 
 	release_resources();
