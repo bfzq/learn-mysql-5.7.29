@@ -5471,7 +5471,7 @@ void mysql_parse(THD *thd, Parser_state *parser_state)
 
     if (!err)
     {
-      err= parse_sql(thd, parser_state, NULL);
+      err= parse_sql(thd, parser_state, NULL); // check sql legal
       if (!err)
         err= invoke_post_parse_rewrite_plugins(thd, false);
 
