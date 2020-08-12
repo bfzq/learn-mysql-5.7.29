@@ -187,9 +187,9 @@ bool all_tables_not_ok(THD *thd, TABLE_LIST *tables)
   active rules in ignore_db or in do_db containers. If there
   are, then check if there is a match, if not then check the
   wild_do rules.
-      
-  NOTE: This means that when using this function replicate-do-db 
-        and replicate-ignore-db take precedence over wild do 
+
+  NOTE: This means that when using this function replicate-do-db
+        and replicate-ignore-db take precedence over wild do
         rules.
 
   @param thd  Thread handle.
@@ -379,7 +379,7 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_ALTER_EVENT]=    CF_CHANGES_DATA | CF_AUTO_COMMIT_TRANS;
   sql_command_flags[SQLCOM_DROP_EVENT]=     CF_CHANGES_DATA | CF_AUTO_COMMIT_TRANS;
 
-  sql_command_flags[SQLCOM_UPDATE]=	    CF_CHANGES_DATA | CF_REEXECUTION_FRAGILE |
+  sql_command_flags[SQLCOM_UPDATE]=     CF_CHANGES_DATA | CF_REEXECUTION_FRAGILE |
                                             CF_CAN_GENERATE_ROW_EVENTS |
                                             CF_OPTIMIZER_TRACE |
                                             CF_CAN_BE_EXPLAINED;
@@ -388,7 +388,7 @@ void init_update_queries(void)
                                             CF_OPTIMIZER_TRACE |
                                             CF_CAN_BE_EXPLAINED;
   // This is INSERT VALUES(...), can be VALUES(stored_func()) so we trace it
-  sql_command_flags[SQLCOM_INSERT]=	    CF_CHANGES_DATA | CF_REEXECUTION_FRAGILE |
+  sql_command_flags[SQLCOM_INSERT]=     CF_CHANGES_DATA | CF_REEXECUTION_FRAGILE |
                                             CF_CAN_GENERATE_ROW_EVENTS |
                                             CF_OPTIMIZER_TRACE |
                                             CF_CAN_BE_EXPLAINED;
@@ -879,7 +879,7 @@ void free_items(Item *item)
 */
 void cleanup_items(Item *item)
 {
-  DBUG_ENTER("cleanup_items");  
+  DBUG_ENTER("cleanup_items");
   for (; item ; item=item->next)
     item->cleanup();
   DBUG_VOID_RETURN;
@@ -919,7 +919,7 @@ bool do_command(THD *thd)
   thd->lex->set_current_select(0);
 
   /*
-    XXX: this code is here only to clear possible errors of init_connect. 
+    XXX: this code is here only to clear possible errors of init_connect.
     Consider moving to prepare_new_connection_state() instead.
     That requires making sure the DA is cleared before non-parsing statements
     such as COM_QUIT.
@@ -967,12 +967,16 @@ bool do_command(THD *thd)
     In particular, a new instrumented statement is started.
     See init_net_server_extension()
   */
+
+
+  /*Get net data in block way*/
   thd->m_server_idle= true;
   rc= thd->get_protocol()->get_command(&com_data, &command);
   thd->m_server_idle= false;
 
   if (rc)
   {
+    /*if error , into here*/
     if (classic)
     {
       DBUG_PRINT("info",("Got error %d reading command from socket %s",
@@ -1029,6 +1033,7 @@ bool do_command(THD *thd)
   if (classic)
     my_net_set_read_timeout(net, thd->variables.net_read_timeout);
 
+  /*important function: dispatch_command*/
   return_value= dispatch_command(thd, &com_data, command);
   thd->get_protocol_classic()->get_packet()->shrink(
       thd->variables.net_buffer_length);
@@ -1071,7 +1076,7 @@ static my_bool deny_updates_if_read_only_option(THD *thd,
   if (lex->sql_command == SQLCOM_UPDATE_MULTI)
     DBUG_RETURN(FALSE);
 
-  const my_bool create_temp_tables= 
+  const my_bool create_temp_tables=
     (lex->sql_command == SQLCOM_CREATE_TABLE) &&
     (lex->create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
@@ -1079,7 +1084,7 @@ static my_bool deny_updates_if_read_only_option(THD *thd,
      (lex->sql_command == SQLCOM_CREATE_TABLE) &&
      !(lex->create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
-  const my_bool drop_temp_tables= 
+  const my_bool drop_temp_tables=
     (lex->sql_command == SQLCOM_DROP_TABLE) &&
     lex->drop_temporary;
 
@@ -1341,6 +1346,7 @@ bool dispatch_command(THD *thd, const COM_DATA *com_data,
   }
 #endif /* !EMBEDDED_LIBRARY */
 
+  /*  dispatch command in here */
   switch (command) {
   case COM_INIT_DB:
   {
@@ -1411,7 +1417,7 @@ bool dispatch_command(THD *thd, const COM_DATA *com_data,
 #ifndef NO_EMBEDDED_ACCESS_CHECKS
       /* we've authenticated new user */
       if (save_user_connect)
-	decrease_user_connections(save_user_connect);
+  decrease_user_connections(save_user_connect);
 #endif /* NO_EMBEDDED_ACCESS_CHECKS */
       mysql_mutex_lock(&thd->LOCK_thd_data);
       my_free(const_cast<char*>(save_db.str));
@@ -1723,7 +1729,7 @@ bool dispatch_command(THD *thd, const COM_DATA *com_data,
       during execution of COM_REFRESH.
     */
     lex_start(thd);
-    
+
     thd->status_var.com_stat[SQLCOM_FLUSH]++;
     ulong options= (ulong) com_data->com_refresh.options;
     if (trans_commit_implicit(thd))
@@ -2086,7 +2092,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
     break;
   }
   case SCH_PROFILES:
-    /* 
+    /*
       Mark this current profiling record to be discarded.  We don't
       wish to have SHOW commands show up in profiling.
     */
@@ -2112,7 +2118,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
   default:
     break;
   }
-  
+
   SELECT_LEX *select_lex= lex->current_select();
   if (make_schema_select(thd, select_lex, schema_table_idx))
   {
@@ -2149,7 +2155,7 @@ bool alloc_query(THD *thd, const char *packet, size_t packet_length)
   }
   const char *pos= packet + packet_length;     // Point at end null
   while (packet_length > 0 &&
-	 (pos[-1] == ';' || my_isspace(thd->charset() ,pos[-1])))
+   (pos[-1] == ';' || my_isspace(thd->charset() ,pos[-1])))
   {
     pos--;
     packet_length--;
@@ -2534,7 +2540,7 @@ mysql_execute_command(THD *thd, bool first_level)
       */
       add_table_for_trigger(thd, lex->spname->m_db,
                             lex->spname->m_name, true, &all_tables);
-      
+
       if (!all_tables)
       {
         /*
@@ -2547,8 +2553,8 @@ mysql_execute_command(THD *thd, bool first_level)
         binlog_gtid_end_transaction(thd);
         DBUG_RETURN(0);
       }
-      
-      // force searching in slave.cc:tables_ok() 
+
+      // force searching in slave.cc:tables_ok()
       all_tables->updating= 1;
     }
 
@@ -2587,11 +2593,11 @@ mysql_execute_command(THD *thd, bool first_level)
         binlog_gtid_end_transaction(thd);
         DBUG_RETURN(0);
       }
-      
+
       for (table=all_tables; table; table=table->next_global)
         table->updating= TRUE;
     }
-    
+
     /*
       Check if statment should be skipped because of slave filtering
       rules
@@ -2601,13 +2607,13 @@ mysql_execute_command(THD *thd, bool first_level)
         rules later in the code
       - SET: we always execute it (Not that many SET commands exists in
         the binary log anyway -- only 4.1 masters write SET statements,
-	in 5.0 there are no SET statements in the binary log)
+  in 5.0 there are no SET statements in the binary log)
       - DROP TEMPORARY TABLE IF EXISTS: we always execute it (otherwise we
         have stale files on slave caused by exclusion of one tmp table).
     */
     if (!(lex->sql_command == SQLCOM_UPDATE_MULTI) &&
-	!(lex->sql_command == SQLCOM_SET_OPTION) &&
-	!(lex->sql_command == SQLCOM_DROP_TABLE &&
+  !(lex->sql_command == SQLCOM_SET_OPTION) &&
+  !(lex->sql_command == SQLCOM_DROP_TABLE &&
           lex->drop_temporary && lex->drop_if_exists) &&
         all_tables_not_ok(thd, all_tables))
     {
@@ -2616,7 +2622,7 @@ mysql_execute_command(THD *thd, bool first_level)
       binlog_gtid_end_transaction(thd);
       DBUG_RETURN(0);
     }
-    /* 
+    /*
        Execute deferred events first
     */
     if (slave_execute_deferred_events(thd))
@@ -2898,16 +2904,16 @@ case SQLCOM_PREPARE:
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      ((1L << (uint) Sql_condition::SL_NOTE) |
-			       (1L << (uint) Sql_condition::SL_WARNING) |
-			       (1L << (uint) Sql_condition::SL_ERROR)
-			       ));
+            ((1L << (uint) Sql_condition::SL_NOTE) |
+             (1L << (uint) Sql_condition::SL_WARNING) |
+             (1L << (uint) Sql_condition::SL_ERROR)
+             ));
     break;
   }
   case SQLCOM_SHOW_ERRORS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      (1L << (uint) Sql_condition::SL_ERROR));
+            (1L << (uint) Sql_condition::SL_ERROR));
     break;
   }
   case SQLCOM_SHOW_PROFILES:
@@ -3078,9 +3084,9 @@ case SQLCOM_PREPARE:
 
     /* Fix names if symlinked or relocated tables */
     if (append_file_to_dir(thd, &create_info.data_file_name,
-			   create_table->table_name) ||
-	append_file_to_dir(thd, &create_info.index_file_name,
-			   create_table->table_name))
+         create_table->table_name) ||
+  append_file_to_dir(thd, &create_info.index_file_name,
+         create_table->table_name))
       goto end_with_restore_list;
 
     /*
@@ -3095,8 +3101,8 @@ case SQLCOM_PREPARE:
       DEFAULT to not confuse old users. (This may change).
     */
     if ((create_info.used_fields &
-	 (HA_CREATE_USED_DEFAULT_CHARSET | HA_CREATE_USED_CHARSET)) ==
-	HA_CREATE_USED_CHARSET)
+   (HA_CREATE_USED_DEFAULT_CHARSET | HA_CREATE_USED_CHARSET)) ==
+  HA_CREATE_USED_CHARSET)
     {
       create_info.used_fields&= ~HA_CREATE_USED_CHARSET;
       create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
@@ -3133,7 +3139,7 @@ case SQLCOM_PREPARE:
       */
       if(lex->is_ignore())
         lex->set_stmt_unsafe(LEX::BINLOG_STMT_UNSAFE_CREATE_IGNORE_SELECT);
-      
+
       if(lex->duplicates == DUP_REPLACE)
         lex->set_stmt_unsafe(LEX::BINLOG_STMT_UNSAFE_CREATE_REPLACE_SELECT);
 
@@ -3145,7 +3151,7 @@ case SQLCOM_PREPARE:
         raise a warning, as it may cause problems
         (see 'NAME_CONST issues' in 'Binary Logging of Stored Programs')
        */
-      if (thd->query_name_consts && 
+      if (thd->query_name_consts &&
           mysql_bin_log.is_open() &&
           thd->variables.binlog_format == BINLOG_FORMAT_STMT &&
           !mysql_bin_log.is_query_in_union(thd, thd->query_id))
@@ -3163,17 +3169,17 @@ case SQLCOM_PREPARE:
           If it differs from number of NAME_CONST substitution applied,
           we may have a SOME_FUNC(NAME_CONST()) in the SELECT list,
           that may cause a problem with binary log (see BUG#35383),
-          raise a warning. 
+          raise a warning.
         */
         if (splocal_refs != thd->query_name_consts)
-          push_warning(thd, 
+          push_warning(thd,
                        Sql_condition::SL_WARNING,
                        ER_UNKNOWN_ERROR,
 "Invoked routine ran a statement that may cause problems with "
 "binary log, see 'NAME_CONST issues' in 'Binary Logging of Stored Programs' "
 "section of the manual.");
       }
-      
+
       unit->set_limit(select_lex);
 
       /*
@@ -3494,7 +3500,7 @@ end_with_restore_list:
                        &table->next_local->grant.privilege,
                        &table->next_local->grant.m_internal,
                        0, 0))
-	goto error;
+  goto error;
       TABLE_LIST old_list, new_list;
       /*
         we do not need initialize old_list and new_list because we will
@@ -3518,7 +3524,7 @@ end_with_restore_list:
   case SQLCOM_SHOW_BINLOGS:
     {
       if (check_global_access(thd, SUPER_ACL | REPL_CLIENT_ACL))
-	goto error;
+  goto error;
       res = show_binlogs(thd);
       break;
     }
@@ -3622,11 +3628,11 @@ end_with_restore_list:
     if (!lex->drop_temporary)
     {
       if (check_table_access(thd, DROP_ACL, all_tables, FALSE, UINT_MAX, FALSE))
-	goto error;				/* purecov: inspected */
+  goto error;				/* purecov: inspected */
     }
     /* DDL and binlog write order are protected by metadata locks. */
     res= mysql_rm_table(thd, first_table, lex->drop_if_exists,
-			lex->drop_temporary);
+      lex->drop_temporary);
     /* when dropping temporary tables if @@session_track_state_change is ON then
        send the boolean tracker in the OK packet */
     if(!res && lex->drop_temporary)
@@ -3653,7 +3659,7 @@ end_with_restore_list:
   case SQLCOM_SHOW_ENGINE_LOGS:
     {
       if (check_access(thd, FILE_ACL, any_db, NULL, NULL, 0, 0))
-	goto error;
+  goto error;
       res= ha_show_status(thd, lex->create_info.db_type, HA_ENGINE_LOGS);
       break;
     }
@@ -3672,7 +3678,7 @@ end_with_restore_list:
   {
     DBUG_ASSERT(first_table == all_tables && first_table != 0);
     uint privilege= (lex->duplicates == DUP_REPLACE ?
-		     INSERT_ACL | DELETE_ACL : INSERT_ACL) |
+         INSERT_ACL | DELETE_ACL : INSERT_ACL) |
                     (lex->local_file ? 0 : FILE_ACL);
 
     if (lex->local_file)
@@ -3680,8 +3686,8 @@ end_with_restore_list:
       if (!thd->get_protocol()->has_client_capability(CLIENT_LOCAL_FILES) ||
           !opt_local_infile)
       {
-	my_message(ER_NOT_ALLOWED_COMMAND, ER(ER_NOT_ALLOWED_COMMAND), MYF(0));
-	goto error;
+  my_message(ER_NOT_ALLOWED_COMMAND, ER(ER_NOT_ALLOWED_COMMAND), MYF(0));
+  goto error;
       }
     }
 
@@ -4037,7 +4043,7 @@ end_with_restore_list:
         DBUG_ASSERT(user->host.str != 0);
 
         /*
-          GRANT/REVOKE PROXY has the target user as a first entry in the list. 
+          GRANT/REVOKE PROXY has the target user as a first entry in the list.
          */
         if (lex->type == TYPE_ENUM_PROXY && first_user)
         {
@@ -4045,7 +4051,7 @@ end_with_restore_list:
           if (acl_check_proxy_grant_access (thd, user->host.str, user->user.str,
                                         lex->grant & GRANT_ACL))
             goto error;
-        } 
+        }
         else if (is_acl_user(user->host.str, user->user.str) &&
                  user->auth.str &&
                  check_change_password (thd, user->host.str, user->user.str,
@@ -4059,15 +4065,15 @@ end_with_restore_list:
       if (lex->type == TYPE_ENUM_PROCEDURE ||
           lex->type == TYPE_ENUM_FUNCTION)
       {
-        uint grants= lex->all_privileges 
-		   ? (PROC_ACLS & ~GRANT_ACL) | (lex->grant & GRANT_ACL)
-		   : lex->grant;
+        uint grants= lex->all_privileges
+       ? (PROC_ACLS & ~GRANT_ACL) | (lex->grant & GRANT_ACL)
+       : lex->grant;
         if (check_grant_routine(thd, grants | GRANT_ACL, all_tables,
                                 lex->type == TYPE_ENUM_PROCEDURE, 0))
-	  goto error;
+    goto error;
         /* Conditionally writes to binlog */
         res= mysql_routine_grant(thd, all_tables,
-                                 lex->type == TYPE_ENUM_PROCEDURE, 
+                                 lex->type == TYPE_ENUM_PROCEDURE,
                                  lex->users_list, grants,
                                  lex->sql_command == SQLCOM_REVOKE, TRUE);
         if (!res)
@@ -4075,20 +4081,20 @@ end_with_restore_list:
       }
       else
       {
-	if (check_grant(thd,(lex->grant | lex->grant_tot_col | GRANT_ACL),
+  if (check_grant(thd,(lex->grant | lex->grant_tot_col | GRANT_ACL),
                         all_tables, FALSE, UINT_MAX, FALSE))
-	  goto error;
+    goto error;
         /* Conditionally writes to binlog */
         res= mysql_table_grant(thd, all_tables, lex->users_list,
-			       lex->columns, lex->grant,
-			       lex->sql_command == SQLCOM_REVOKE);
+             lex->columns, lex->grant,
+             lex->sql_command == SQLCOM_REVOKE);
       }
     }
     else
     {
       if (lex->columns.elements || (lex->type && lex->type != TYPE_ENUM_PROXY))
       {
-	my_message(ER_ILLEGAL_GRANT_FOR_TABLE, ER(ER_ILLEGAL_GRANT_FOR_TABLE),
+  my_message(ER_ILLEGAL_GRANT_FOR_TABLE, ER(ER_ILLEGAL_GRANT_FOR_TABLE),
                    MYF(0));
         goto error;
       }
@@ -4101,17 +4107,17 @@ end_with_restore_list:
       }
       if (!res)
       {
-	if (lex->sql_command == SQLCOM_GRANT)
-	{
-	  List_iterator <LEX_USER> str_list(lex->users_list);
-	  LEX_USER *user, *tmp_user;
-	  while ((tmp_user=str_list++))
+  if (lex->sql_command == SQLCOM_GRANT)
+  {
+    List_iterator <LEX_USER> str_list(lex->users_list);
+    LEX_USER *user, *tmp_user;
+    while ((tmp_user=str_list++))
           {
             if (!(user= get_current_user(thd, tmp_user)))
               goto error;
-	    reset_mqh(user, 0);
+      reset_mqh(user, 0);
           }
-	}
+  }
       }
     }
     break;
@@ -4168,22 +4174,22 @@ end_with_restore_list:
       */
 
       if (write_to_binlog > 0)  // we should write
-      { 
+      {
         if (!lex->no_write_to_binlog)
           res= write_bin_log(thd, false, thd->query().str, thd->query().length);
-      } else if (write_to_binlog < 0) 
+      } else if (write_to_binlog < 0)
       {
-        /* 
-           We should not write, but rather report error because 
-           reload_acl_and_cache binlog interactions failed 
+        /*
+           We should not write, but rather report error because
+           reload_acl_and_cache binlog interactions failed
          */
         res= 1;
-      } 
+      }
 
       if (!res)
         my_ok(thd);
-    } 
-    
+    }
+
     break;
   }
   case SQLCOM_KILL:
@@ -4435,7 +4441,7 @@ end_with_restore_list:
 
       /*
         Restore current user with GLOBAL_ACL privilege of SQL thread
-      */ 
+      */
       if (restore_backup_context)
       {
         DBUG_ASSERT(thd->slave_thread == 1);
@@ -4466,21 +4472,21 @@ end_with_restore_list:
        goto error;
 
       /*
-        By this moment all needed SPs should be in cache so no need to look 
-        into DB. 
+        By this moment all needed SPs should be in cache so no need to look
+        into DB.
       */
       if (!(sp= sp_find_routine(thd, SP_TYPE_PROCEDURE, lex->spname,
                                 &thd->sp_proc_cache, TRUE)))
       {
-	my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "PROCEDURE",
+  my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "PROCEDURE",
                  lex->spname->m_qname.str);
-	goto error;
+  goto error;
       }
       else
       {
-	ha_rows select_limit;
+  ha_rows select_limit;
         /* bits that should be cleared in thd->server_status */
-	uint bits_to_be_cleared= 0;
+  uint bits_to_be_cleared= 0;
         /*
           Check that the stored procedure doesn't contain Dynamic SQL
           and doesn't return result sets: such stored procedures can't
@@ -4505,33 +4511,33 @@ end_with_restore_list:
         }
 #endif /* !EMBEDDED_LIBRARY */
 
-	if (sp->m_flags & sp_head::MULTI_RESULTS)
-	{
-	  if (!thd->get_protocol()->has_client_capability(CLIENT_MULTI_RESULTS))
-	  {
+  if (sp->m_flags & sp_head::MULTI_RESULTS)
+  {
+    if (!thd->get_protocol()->has_client_capability(CLIENT_MULTI_RESULTS))
+    {
             /*
               The client does not support multiple result sets being sent
               back
             */
-	    my_error(ER_SP_BADSELECT, MYF(0), sp->m_qname.str);
-	    goto error;
-	  }
+      my_error(ER_SP_BADSELECT, MYF(0), sp->m_qname.str);
+      goto error;
+    }
           /*
             If SERVER_MORE_RESULTS_EXISTS is not set,
             then remember that it should be cleared
           */
-	  bits_to_be_cleared= (~thd->server_status &
+    bits_to_be_cleared= (~thd->server_status &
                                SERVER_MORE_RESULTS_EXISTS);
-	  thd->server_status|= SERVER_MORE_RESULTS_EXISTS;
-	}
+    thd->server_status|= SERVER_MORE_RESULTS_EXISTS;
+  }
 
-	if (check_routine_access(thd, EXECUTE_ACL,
-				 sp->m_db.str, sp->m_name.str, TRUE, FALSE))
-	{
-	  goto error;
-	}
-	select_limit= thd->variables.select_limit;
-	thd->variables.select_limit= HA_POS_ERROR;
+  if (check_routine_access(thd, EXECUTE_ACL,
+         sp->m_db.str, sp->m_name.str, TRUE, FALSE))
+  {
+    goto error;
+  }
+  select_limit= thd->variables.select_limit;
+  thd->variables.select_limit= HA_POS_ERROR;
 
         /*
           We never write CALL statements into binlog:
@@ -4541,20 +4547,20 @@ end_with_restore_list:
              about writing into binlog.
           So just execute the statement.
         */
-	res= sp->execute_procedure(thd, &lex->call_value_list);
+  res= sp->execute_procedure(thd, &lex->call_value_list);
 
-	thd->variables.select_limit= select_limit;
+  thd->variables.select_limit= select_limit;
 
         thd->server_status&= ~bits_to_be_cleared;
 
-	if (!res)
+  if (!res)
         {
           my_ok(thd, (thd->get_row_count_func() < 0) ? 0 : thd->get_row_count_func());
         }
-	else
+  else
         {
           DBUG_ASSERT(thd->is_error() || thd->killed);
-	  goto error;		// Substatement should already have sent error
+    goto error;		// Substatement should already have sent error
         }
       }
       break;
@@ -4584,16 +4590,16 @@ end_with_restore_list:
       switch (sp_result)
       {
       case SP_OK:
-	my_ok(thd);
-	break;
+  my_ok(thd);
+  break;
       case SP_KEY_NOT_FOUND:
-	my_error(ER_SP_DOES_NOT_EXIST, MYF(0),
+  my_error(ER_SP_DOES_NOT_EXIST, MYF(0),
                  SP_COM_STRING(lex), lex->spname->m_qname.str);
-	goto error;
+  goto error;
       default:
-	my_error(ER_SP_CANT_ALTER, MYF(0),
+  my_error(ER_SP_CANT_ALTER, MYF(0),
                  SP_COM_STRING(lex), lex->spname->m_qname.str);
-	goto error;
+  goto error;
       }
       break;
     }
@@ -4690,26 +4696,26 @@ end_with_restore_list:
       res= sp_result;
       switch (sp_result) {
       case SP_OK:
-	my_ok(thd);
-	break;
+  my_ok(thd);
+  break;
       case SP_KEY_NOT_FOUND:
-	if (lex->drop_if_exists)
-	{
+  if (lex->drop_if_exists)
+  {
           res= write_bin_log(thd, true, thd->query().str, thd->query().length);
-	  push_warning_printf(thd, Sql_condition::SL_NOTE,
-			      ER_SP_DOES_NOT_EXIST, ER(ER_SP_DOES_NOT_EXIST),
+    push_warning_printf(thd, Sql_condition::SL_NOTE,
+            ER_SP_DOES_NOT_EXIST, ER(ER_SP_DOES_NOT_EXIST),
                               SP_COM_STRING(lex), lex->spname->m_qname.str);
           if (!res)
             my_ok(thd);
-	  break;
-	}
-	my_error(ER_SP_DOES_NOT_EXIST, MYF(0),
+    break;
+  }
+  my_error(ER_SP_DOES_NOT_EXIST, MYF(0),
                  SP_COM_STRING(lex), lex->spname->m_qname.str);
-	goto error;
+  goto error;
       default:
-	my_error(ER_SP_DROP_FAILED, MYF(0),
+  my_error(ER_SP_DROP_FAILED, MYF(0),
                  SP_COM_STRING(lex), lex->spname->m_qname.str);
-	goto error;
+  goto error;
       }
       break;
     }
@@ -4722,7 +4728,7 @@ end_with_restore_list:
   case SQLCOM_SHOW_CREATE_FUNC:
     {
       if (sp_show_create_routine(thd, SP_TYPE_FUNCTION, lex->spname))
-	goto error;
+  goto error;
       break;
     }
   case SQLCOM_SHOW_PROC_CODE:
@@ -5169,7 +5175,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
 
 
 /****************************************************************************
-	Check stack size; Send error if there isn't enough stack to continue
+  Check stack size; Send error if there isn't enough stack to continue
 ****************************************************************************/
 
 
@@ -5191,7 +5197,7 @@ long max_stack_used;
   - Passing to check_stack_overrun() prevents the compiler from removing it.
 */
 bool check_stack_overrun(THD *thd, long margin,
-			 uchar *buf MY_ATTRIBUTE((unused)))
+       uchar *buf MY_ATTRIBUTE((unused)))
 {
   long stack_used;
   DBUG_ASSERT(thd == current_thd);
@@ -5477,14 +5483,14 @@ void mysql_parse(THD *thd, Parser_state *parser_state)
       /*
         Rewrite the query for logging and for the Performance Schema statement
         tables. Raw logging happened earlier.
-      
+
         Query-cache only handles SELECT, which we don't rewrite, so it's no
         concern of ours.
 
         Sub-routines of mysql_rewrite_query() should try to only rewrite when
         necessary (e.g. not do password obfuscation when query contains no
         password).
-      
+
         If rewriting does not happen here, thd->rewritten_query is still empty
         from being reset in alloc_query().
       */
@@ -5521,7 +5527,7 @@ void mysql_parse(THD *thd, Parser_state *parser_state)
           size_t qlen= found_semicolon
             ? (found_semicolon - thd->query().str)
             : thd->query().length;
-          
+
           query_logger.general_log_write(thd, COM_QUERY,
                                          thd->query().str, qlen);
         }
@@ -5592,7 +5598,7 @@ void mysql_parse(THD *thd, Parser_state *parser_state)
       /*
         Log the failed raw query in the Performance Schema. This statement did not
         parse, so there is no way to tell if it may contain a password of not.
-      
+
         The tradeoff is:
           a) If we do log the query, a user typing by accident a broken query
              containing a password will have the password exposed. This is very
@@ -5707,13 +5713,13 @@ bool mysql_test_parse_for_slave(THD *thd)
 */
 
 bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
-		       char *length, char *decimals,
-		       uint type_modifier,
-		       Item *default_value, Item *on_update_value,
+           char *length, char *decimals,
+           uint type_modifier,
+           Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
-		       char *change,
+           char *change,
                        List<String> *interval_list, const CHARSET_INFO *cs,
-		       uint uint_geom_type,
+           uint uint_geom_type,
                        Generated_column *gcol_info)
 {
   Create_field *new_field;
@@ -5752,14 +5758,14 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 
   if (default_value)
   {
-    /* 
+    /*
       Default value should be literal => basic constants =>
       no need fix_fields()
 
       We allow only CURRENT_TIMESTAMP as function default for the TIMESTAMP or
       DATETIME types.
     */
-    if (default_value->type() == Item::FUNC_ITEM && 
+    if (default_value->type() == Item::FUNC_ITEM &&
         (static_cast<Item_func*>(default_value)->functype() !=
          Item_func::NOW_FUNC ||
          (!real_type_with_now_as_default(type)) ||
@@ -5772,10 +5778,10 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
     {
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) ==
-	  NOT_NULL_FLAG)
+    NOT_NULL_FLAG)
       {
-	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	DBUG_RETURN(1);
+  my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+  DBUG_RETURN(1);
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
@@ -5849,12 +5855,12 @@ void add_to_list(SQL_I_List<ORDER> &list, ORDER *order)
 */
 
 TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
-					     Table_ident *table,
-					     LEX_STRING *alias,
-					     ulong table_options,
-					     thr_lock_type lock_type,
-					     enum_mdl_type mdl_type,
-					     List<Index_hint> *index_hints_arg,
+               Table_ident *table,
+               LEX_STRING *alias,
+               ulong table_options,
+               thr_lock_type lock_type,
+               enum_mdl_type mdl_type,
+               List<Index_hint> *index_hints_arg,
                                              List<String> *partition_names,
                                              LEX_STRING *option)
 {
@@ -5941,8 +5947,8 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
     }
     schema_table= find_schema_table(thd, ptr->table_name);
     if (!schema_table ||
-        (schema_table->hidden && 
-         ((sql_command_flags[lex->sql_command] & CF_STATUS_COMMAND) == 0 || 
+        (schema_table->hidden &&
+         ((sql_command_flags[lex->sql_command] & CF_STATUS_COMMAND) == 0 ||
           /*
             this check is used for show columns|keys from I_S hidden table
           */
@@ -5967,14 +5973,14 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
     if (lex->sql_command == SQLCOM_CREATE_VIEW)
       first_table= first_table ? first_table->next_local : NULL;
     for (TABLE_LIST *tables= first_table ;
-	 tables ;
-	 tables=tables->next_local)
+   tables ;
+   tables=tables->next_local)
     {
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcmp(ptr->db, tables->db))
+    !strcmp(ptr->db, tables->db))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
-	DBUG_RETURN(0);				/* purecov: tested */
+  my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
+  DBUG_RETURN(0);				/* purecov: tested */
       }
     }
   }
@@ -6241,7 +6247,7 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
   enum_mdl_type mdl_type= mdl_type_for_dml(lock_type);
   DBUG_ENTER("set_lock_for_tables");
   DBUG_PRINT("enter", ("lock_type: %d  for_update: %d", lock_type,
-		       for_update));
+           for_update));
   for (TABLE_LIST *tables= table_list.first;
        tables;
        tables= tables->next_local)
@@ -6261,13 +6267,13 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
-    (SELECT ... ORDER BY order_list [LIMIT n]) ORDER BY ... 
+    (SELECT ... ORDER BY order_list [LIMIT n]) ORDER BY ...
     @endvarbatim
     or of the form
     @varbatim
     (SELECT ... ORDER BY LIMIT n) ORDER BY ...
     @endvarbatim
-  
+
   @param thd_arg       thread handle
 
   @note
@@ -6301,12 +6307,12 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
 
   if (!is_union())
   {
-    /* 
-      This works only for 
+    /*
+      This works only for
       (SELECT ... ORDER BY list [LIMIT n]) ORDER BY order_list [LIMIT m],
       (SELECT ... LIMIT n) ORDER BY order_list [LIMIT m]
       just before the parser starts processing order_list
-    */ 
+    */
     fake_select_lex->no_table_names_allowed= 1;
   }
   thd->lex->pop_context();
@@ -6415,8 +6421,8 @@ void add_join_on(TABLE_LIST *b, Item *expr)
     SELECT * FROM t1, t2 WHERE (t1.j=t2.j and <some_cond>)
    @endverbatim
 
-  @param a		  Left join argument
-  @param b		  Right join argument
+  @param a      Left join argument
+  @param b      Right join argument
   @param using_fields    Field names from USING clause
 */
 
@@ -6526,7 +6532,7 @@ private:
 
 public:
   Kill_non_super_conn(THD *thd) :
-	    m_client_thd(thd)
+      m_client_thd(thd)
   {
     DBUG_ASSERT(m_client_thd->security_context()->check_access(SUPER_ACL));
   }
@@ -6545,8 +6551,8 @@ public:
     */
     if (thd_to_kill->security_context()->has_account_assigned()
   && !(thd_to_kill->security_context()->check_access(SUPER_ACL))
-	&& thd_to_kill->killed != THD::KILL_CONNECTION
-	&& !thd_to_kill->slave_thread)
+  && thd_to_kill->killed != THD::KILL_CONNECTION
+  && !thd_to_kill->slave_thread)
       thd_to_kill->awake(THD::KILL_CONNECTION);
 
     mysql_mutex_unlock(&thd_to_kill->LOCK_thd_data);
@@ -6650,9 +6656,9 @@ Comp_creator *comp_ne_creator(bool invert)
     constructed Item (or 0 if out of memory)
 */
 Item * all_any_subquery_creator(Item *left_expr,
-				chooser_compare_func_creator cmp,
-				bool all,
-				SELECT_LEX *select_lex)
+        chooser_compare_func_creator cmp,
+        bool all,
+        SELECT_LEX *select_lex)
 {
   if ((cmp == &comp_eq_creator) && !all)       //  = ANY <=> IN
     return new Item_in_subselect(left_expr, select_lex);
@@ -6733,11 +6739,11 @@ Item *negate_expression(Parse_context *pc, Item *expr)
 /**
   Set the specified definer to the default value, which is the
   current user in the thread.
- 
+
   @param[in]  thd       thread handler
   @param[out] definer   definer
 */
- 
+
 void get_default_definer(THD *thd, LEX_USER *definer)
 {
   const Security_context *sctx= thd->security_context();
@@ -6908,7 +6914,7 @@ bool check_string_char_length(const LEX_CSTRING &str, const char *err_msg,
 
   RETURN VALUES
     0	ok
-    1	error  
+    1	error
 */
 C_MODE_START
 
@@ -6970,7 +6976,7 @@ bool check_host_name(const LEX_CSTRING &str)
   {
     if (*name == '@')
     {
-      my_printf_error(ER_UNKNOWN_ERROR, 
+      my_printf_error(ER_UNKNOWN_ERROR,
                       "Malformed hostname (illegal symbol: '%c')", MYF(0),
                       *name);
       return TRUE;
@@ -7041,7 +7047,7 @@ extern int MYSQLparse(class THD *thd); // from sql_yacc.cc
     }
 
     parser_state.m_input.m_compute_digest= true;
-    
+
     rc= parse_sql(the, &parser_state, ctx);
     if (! rc)
     {
@@ -7244,7 +7250,7 @@ bool parse_sql(THD *thd,
 
   If "cl" is NULL (e.g. when COLLATE clause is not specified),
   then simply "cs" is returned.
-  
+
   @return Error status.
     @retval NULL, if "cl" is not applicable to "cs".
     @retval pointer to merged CHARSET_INFO on success.
