@@ -2543,7 +2543,7 @@ files_checked:
   operations */
 
   if (!srv_read_only_mode) {
-
+    // 创建主线程
     os_thread_create(
       srv_master_thread,
       NULL, thread_ids + (1 + SRV_MAX_N_IO_THREADS));
