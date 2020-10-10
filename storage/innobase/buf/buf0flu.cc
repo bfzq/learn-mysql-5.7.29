@@ -2173,6 +2173,7 @@ they are unable to find a replaceable page at the tail of the LRU
 list i.e.: when the background LRU flushing in the page_cleaner thread
 is not fast enough to keep pace with the workload.
 @return true if success. */
+// 刷单个脏页到磁盘
 bool
 buf_flush_single_page_from_LRU(
 /*===========================*/
