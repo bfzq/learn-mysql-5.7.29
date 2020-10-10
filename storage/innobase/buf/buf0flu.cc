@@ -1134,6 +1134,7 @@ writes! NOTE: buf_pool->mutex and buf_page_get_mutex(bpage) must be
 held upon entering this function, and they will be released by this
 function if it returns true.
 @return TRUE if the page was flushed */
+// 刷脏页到文件
 ibool
 buf_flush_page(
 /*===========*/
