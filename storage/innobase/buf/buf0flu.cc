@@ -1097,7 +1097,7 @@ buf_flush_write_block_low(
     ulint	type = IORequest::WRITE | IORequest::DO_NOT_WAKE;
 
     IORequest	request(type);
-
+    // 写入数据
     fil_io(request,
            sync, bpage->id, bpage->size, 0, bpage->size.physical(),
            frame, bpage);
@@ -1114,6 +1114,7 @@ buf_flush_write_block_low(
   are working on. */
   if (sync) {
     ut_ad(flush_type == BUF_FLUSH_SINGLE_PAGE);
+    // 刷新
     fil_flush(bpage->id.space());
 
     /* true means we want to evict this page from the
@@ -1150,7 +1151,7 @@ buf_flush_page(
   ut_ad(buf_page_in_file(bpage));
   ut_ad(!sync || flush_type == BUF_FLUSH_SINGLE_PAGE);
 
-block_mutex = buf_page_get_mutex(bpage);
+  block_mutex = buf_page_get_mutex(bpage);
   ut_ad(mutex_own(block_mutex));
 
   ut_ad(buf_flush_ready_for_flush(bpage, flush_type));
