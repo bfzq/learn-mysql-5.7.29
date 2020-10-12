@@ -2387,9 +2387,9 @@ loop:
 
     if (srv_check_activity(old_activity_count)) {
       old_activity_count = srv_get_activity_count();
-      srv_master_do_active_tasks();
+      srv_master_do_active_tasks(); // 执行这个
     } else {
-      srv_master_do_idle_tasks();
+      srv_master_do_idle_tasks(); // 或者执行这个
     }
   }
 

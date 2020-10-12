@@ -366,6 +366,7 @@ struct ReleaseBlocks {
       if (slot->type == MTR_MEMO_PAGE_X_FIX
           || slot->type == MTR_MEMO_PAGE_SX_FIX) {
         // slot is a dirty page, flush it to flush list
+        // 添加脏页到刷新队列
         add_dirty_page_to_flush_list(slot);
 
       } else if (slot->type == MTR_MEMO_BUF_FIX) {
